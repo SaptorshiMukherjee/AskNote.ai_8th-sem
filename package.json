@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -42,15 +43,22 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@tanstack/react-query": "^5.56.2",
     "@types/uuid": "^9.0.8",
+    "ai": "^4.3.10",
+    "axios": "^1.9.0",
+    "body-parser": "^2.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
+    "express": "^5.1.0",
     "input-otp": "^1.2.4",
     "langchain": "^0.0.200",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
+    "open": "^10.1.1",
+    "openai": "^4.96.0",
     "pdfjs-dist": "^3.11.174",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -84,5 +92,18 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
-  }
+  },
+  "description": "![Build Status](https://img.shields.io/badge/build-passing-brightgreen)\r ![License](https://img.shields.io/badge/license-MIT-blue)\r ![Version](https://img.shields.io/badge/version-1.0.0-yellow)\r ![Made with ❤️](https://img.shields.io/badge/made%20with-%E2%9D%A4%EF%B8%8F-red)",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SaptorshiMukherjee/AskNote.ai_8th-sem.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SaptorshiMukherjee/AskNote.ai_8th-sem/issues"
+  },
+  "homepage": "https://github.com/SaptorshiMukherjee/AskNote.ai_8th-sem#readme"
 }
