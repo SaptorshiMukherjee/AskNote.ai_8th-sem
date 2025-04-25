@@ -1,78 +1,59 @@
 # 🚀 Welcome to Our Project
 
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-1.0.0-yellow)
-![Made with ❤️](https://img.shields.io/badge/made%20with-%E2%9D%A4%EF%B8%8F-red)
+**Build Status**: ![Build Status Badge](https://img.shields.io/badge/build-passing-brightgreen)  
+**License**: MIT  
+**Version**: 1.0.0
 
-## Project info
+**URL**: [Your Project URL](https://your-project-url.example.com)
 
-**URL**: https://your-project-url.example.com
+---
 
-## How can I edit this code?
+## ✨ New Features
 
-There are several ways of editing your application.
+### 🎉 Advanced Tone Detection & Conversational Flow
+- **Tone Recognition**: Detects user tone (greeting, goodbye, casual, etc.) to tailor responses.
+- **Friendly Responses**: Natural, emoji-filled replies based on user tone.
 
-**Use the Web Interface**
+### 📑 Structured Answers
+- **Headings**: Answers are organized with clear headings.
+- **Bullet Points & Emojis**: Use of bullet points and emojis for better engagement.
 
-Simply visit your project dashboard and start prompting.
+### 🌍 External Resources
+- **Google & YouTube Links**: Automatically provides related Google and YouTube links.
 
-Changes made via the web interface will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 💻 How to Edit the Code
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in the web interface.
+### Web Interface
+- Visit the project dashboard to edit and commit changes directly.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Local Development
+1. **Clone the repo**:  
+   `git clone <YOUR_GIT_URL>`
+2. **Install dependencies**:  
+   `npm install`
+3. **Start the server**:  
+   `npm run dev`
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Technologies Used
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Vite**
+- **TypeScript**
+- **React**
+- **Shadcn-ui**
+- **Tailwind CSS**
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 🚀 Deployment
 
-**Edit a file directly in GitHub**
+To deploy your project, open the project dashboard and click **Share** -> **Publish**.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 🌐 Custom Domain
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open your project dashboard and click on Share -> Publish.
-
-## Can I connect a custom domain to my project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.example.com/tips-tricks/custom-domain#step-by-step-guide)
+To connect a custom domain, navigate to **Project > Settings > Domains** and click **Connect Domain**.
