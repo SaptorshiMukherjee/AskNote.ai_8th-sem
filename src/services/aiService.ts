@@ -8,9 +8,35 @@ const openai = new OpenAI({
     "HTTP-Referer": import.meta.env.VITE_SITE_URL,
     "X-Title": import.meta.env.VITE_SITE_NAME,
   },
-  dangerouslyAllowBrowser: true // Important for browser use
+  dangerouslyAllowBrowser: true
 });
 
+// Function to identify tone in the user's query (e.g., casual, thanks, greeting, etc.)
+const detectTone = async (text: string): Promise<'greeting' | 'goodbye' | 'thanks' | 'topic' | 'casual'> => {
+  const tonePrompt = `
+Classify the tone of this user message strictly into one of the following categories:
+- "greeting" (e.g., "hey", "how are you", "hello")
+- "goodbye" (e.g., "bye", "see you later", "goodnight")
+- "thanks" (e.g., "thanks", "thank you", "appreciate it")
+- "casual" (e.g., "what's up?", "how's it going?")
+- "topic" (asking about a subject, e.g., "What is blockchain?")
+
+Only reply with one of these labels: greeting, goodbye, thanks, casual, topic
+
+Message: "${text}"
+Answer:
+  `;
+
+  const result = await openai.chat.completions.create({
+    model: "meta-llama/llama-4-maverick:free",
+    messages: [{ role: "user", content: tonePrompt }],
+    temperature: 0.2,
+  });
+
+  return result.choices?.[0]?.message?.content?.trim().toLowerCase() as any;
+};
+
+// Function to fetch external Google and YouTube links
 export const findExternalResources = (topic: string): { google: string, youtube: string } => {
   const encodedTopic = encodeURIComponent(topic);
   return {
@@ -19,47 +45,77 @@ export const findExternalResources = (topic: string): { google: string, youtube:
   };
 };
 
+// Main function to generate the answer
 export const generateAnswer = async (
   context: string,
   pages: number[],
   question: string
 ): Promise<string> => {
   try {
-    console.log("DEBUG | Question:", question);
-    console.log("DEBUG | Context:", context.slice(0, 300));
-    console.log("DEBUG | Pages:", pages);
-
     if (!context || context.trim() === '') {
-      return "I don't see any content to work with in the document yet. Could you try uploading a document first? I'd love to help answer your questions! 🤗";
+      return "Oops! Looks like there's no content to work with. 🤔 Please upload a document so I can help you out! 📄";
     }
 
-    const prompt = `
-You're a helpful assistant that provides insightful and concise answers based on document context.
-Document Context:
+    // Detect tone of the question
+    const tone = await detectTone(question);
+
+    // Handle different tones of speech
+    if (tone === 'greeting') {
+      return "Hey there! 👋 I'm doing awesome — just hanging out in the cloud ☁️ and ready to assist you. What can I help you with today? 😊";
+    }
+
+    if (tone === 'goodbye') {
+      return "Bye for now! 👋 Catch you later, and feel free to come back anytime. 🌟";
+    }
+
+    if (tone === 'thanks') {
+      return "You're welcome! 😊 I'm here anytime if you need more info. 🔍";
+    }
+
+    if (tone === 'casual') {
+      return "Haha, I'm all good in the cloud! 😄 What are you looking to explore today? 💬";
+    }
+
+    if (tone === 'topic') {
+      const prompt = `
+You're a modern, expert-level assistant with a friendly vibe. You explain complex topics in a way that's easy to understand, while keeping things casual and fun! Your answers should:
+- Use **headings** to organize key concepts 📑
+- Include **bullet points** for lists ✔️
+- Add **emojis** to keep it engaging 🎉
+- Be **descriptive** and easy to digest 🧠
+
+Here’s the context from the document:
 ${context}
 
-Question: ${question}
+And the user’s question:
+${question}
+
 Answer:
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: "meta-llama/llama-4-maverick:free",
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7
-    });
+      const completion = await openai.chat.completions.create({
+        model: "meta-llama/llama-4-maverick:free",
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7
+      });
 
-    const aiAnswer = completion.choices?.[0]?.message?.content || "⚠️ I couldn't generate a good answer. Try again!";
+      const aiAnswer = completion.choices?.[0]?.message?.content || "Oops! Something went wrong. 😬 Try again!";
 
-    const { google, youtube } = findExternalResources(question);
-    const externalResources = `\n\n🔍 External resources:\n- [Google Search](${google})\n- [YouTube Videos](${youtube})`;
+      const pagesNote = pages.length
+        ? `\n\n📄 This info came from page${pages.length > 1 ? 's' : ''} ${pages.join(', ')}.`
+        : ``;
 
-    const pagesNote = pages.length
-      ? `\n\n📄 This was found on page${pages.length > 1 ? 's' : ''} ${pages.join(', ')}.`
-      : '';
+      // Add external resources if it's a topic-related question
+      const { google, youtube } = findExternalResources(question);
+      const externalResources = `\n\n🔍 **External resources**:\n- [Google Search](${google})\n- [YouTube Videos](${youtube})`;
 
-    return `💡 Document insights:\n\n${aiAnswer}${pagesNote}${externalResources}\n\n✨ Let me know if you need more info!`;
+      return `💡 **Answer for your question:**\n\n${aiAnswer}${pagesNote}${externalResources}\n\n✨ Let me know if you'd like to dive deeper! 😊`;
+    }
+    
+    return "Sorry, I didn't quite catch that. Can you rephrase or ask something else? 🤔";
+    
   } catch (error) {
-    console.error("OpenRouter API error:", error);
-    return "⚠️ Oops! Something went wrong while fetching the answer from Meta LLaMA.";
+    console.error("Error fetching answer:", error);
+    return "⚠️ Oops! Something went wrong while processing your question. Try again later. 😕";
   }
 };
