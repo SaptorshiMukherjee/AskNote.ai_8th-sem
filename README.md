@@ -1,4 +1,4 @@
-# 🚀 Welcome to Our Project
+# 🚀 Welcome to AskNotes.AI
 
 <!-- **Build Status**: ![Build Status Badge](https://img.shields.io/badge/build-passing-brightgreen)  
 **License**: MIT  
