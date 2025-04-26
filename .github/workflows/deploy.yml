@@ -1,0 +1,35 @@
+name: Deploy Vite Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # or 'master'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # make the secret available to every step
+    env:
+      VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        # VITE_API_KEY is already in the environment
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
