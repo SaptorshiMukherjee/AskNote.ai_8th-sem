@@ -126,17 +126,6 @@ npm run dev
 
 ---
 
-## 🚀 Deployment
-
-To deploy your project, open the project dashboard and click **Share** -> **Publish**.
-
----
-
-## 🌐 Custom Domain
-
-To connect a custom domain, navigate to **Project > Settings > Domains** and click **Connect Domain**.
-
----
 
 ## 🔧 Customization Options
 
