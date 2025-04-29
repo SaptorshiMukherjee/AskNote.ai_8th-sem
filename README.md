@@ -18,8 +18,37 @@
 - **Headings**: Answers are organized with clear headings.
 - **Bullet Points & Emojis**: Use of bullet points and emojis for better engagement.
 
+### 📚 PDF Document Management
+- **PDF Viewer**: Interactive PDF viewer with zoom controls (50% to 100%)
+- **Page Navigation**: Easy navigation between pages with page numbers
+- **Multi-page View**: Toggle between single and multi-page viewing modes
+- **Smooth Scrolling**: Enhanced scrolling experience with custom scrollbars
+- **Document Upload**: Support for PDF file uploads with drag-and-drop interface
+
+### 💬 Chat Management
+- **Session Management**: Create, delete, and manage up to 20 chat sessions
+- **Session History**: View and access previous chat sessions
+- **Session Naming**: Automatic session naming based on first question or document
+- **Session Deletion**: Option to delete individual or all sessions
+- **Session Limit**: Maximum of 20 sessions with clear error messages
+
+### 📝 Study Materials
+- **Document Summary**: Automatic generation of document summaries
+- **Suggested Questions**: AI-generated questions based on document content
+- **Content Breakdown**: Structured breakdown of document content
+- **Study Guide**: Comprehensive study guides with key points
+- **Practice Questions**: Difficulty-based practice questions with page references
+
 ### 🌍 External Resources
 - **Google & YouTube Links**: Automatically provides related Google and YouTube links.
+
+### 🎨 UI/UX Features
+- **Dark Mode**: Full dark mode support with smooth transitions
+- **Responsive Design**: Works seamlessly across different screen sizes
+- **Interactive Elements**: Hover effects and smooth animations
+- **Custom Scrollbars**: Enhanced scrolling experience
+- **Loading States**: Beautiful loading animations and states
+- **Error Handling**: Clear error messages and recovery options
 
 ---
 
@@ -78,6 +107,9 @@ npm run dev
 - **This project was built from scratch** with modern technologies like Vite, TypeScript, React, and Tailwind CSS.
 - **Fully customizable**: Tailor the experience with simple changes to the code and configuration.
 - **Animations & Modern UI**: The user interface includes smooth transitions and animations for a dynamic, engaging experience.
+- **PDF Integration**: Seamless PDF viewing and management with advanced features.
+- **Session Management**: Robust chat session handling with limits and error handling.
+- **Study Tools**: Comprehensive study materials generation and management.
 
 ---
 
@@ -88,6 +120,9 @@ npm run dev
 - **React**: Component-based framework for building user interfaces.
 - **Shadcn-ui**: For customizable UI components.
 - **Tailwind CSS**: A utility-first CSS framework for modern design.
+- **react-pdf**: For PDF document rendering and manipulation.
+- **Lucide Icons**: For beautiful and consistent icons.
+- **ScrollArea**: For enhanced scrolling experience.
 
 ---
 
@@ -100,4 +135,38 @@ To deploy your project, open the project dashboard and click **Share** -> **Publ
 ## 🌐 Custom Domain
 
 To connect a custom domain, navigate to **Project > Settings > Domains** and click **Connect Domain**.
+
+---
+
+## 🔧 Customization Options
+
+### PDF Viewer
+- Adjust zoom levels (50% to 100%)
+- Configure page navigation controls
+- Customize scroll behavior
+- Modify multi-page view settings
+
+### Chat Interface
+- Customize session limit (default: 20)
+- Adjust message styling and layout
+- Modify dark mode colors
+- Configure loading animations
+
+### Study Materials
+- Customize summary generation
+- Adjust question generation parameters
+- Modify study guide structure
+- Configure practice question difficulty levels
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please feel free to submit a Pull Request.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
