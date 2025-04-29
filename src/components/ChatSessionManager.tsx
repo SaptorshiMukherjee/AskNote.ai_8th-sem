@@ -56,6 +56,8 @@ interface ChatSessionManagerProps {
   onDeleteAllSessions: () => void;
 }
 
+const MAX_SESSIONS = 20;
+
 const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
   onFileUpload,
   isLoading,
@@ -68,6 +70,8 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
 }) => {
   const { toast } = useToast();
   const [sessionUploaders, setSessionUploaders] = useState<Record<string, boolean>>({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
   // Toggle file uploader for a specific session
   const toggleSessionUploader = (sessionId: string) => {
@@ -113,6 +117,15 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
     }
   };
 
+  const handleNewSession = () => {
+    if (sessions.length >= MAX_SESSIONS) {
+      setSessionError(`Cannot create more than ${MAX_SESSIONS} sessions. Please delete some existing sessions.`);
+      setTimeout(() => setSessionError(null), 3000);
+      return;
+    }
+    onCreateNewSession();
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-background dark:bg-gray-950">
       {/* Main Document Uploader */}
@@ -130,13 +143,13 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between p-3 border-b border-blue-100 dark:border-blue-900">
           <h3 className="text-sm font-medium text-foreground dark:text-white">
-            Chat History ({sessions.length}/20)
+            Chat History ({sessions.length}/{MAX_SESSIONS})
           </h3>
           <div className="flex gap-1">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={onCreateNewSession}
+              onClick={handleNewSession}
               disabled={isLoading}
               className="dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/50"
             >
@@ -154,6 +167,12 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
             </Button>
           </div>
         </div>
+
+        {sessionError && (
+          <div className="text-center text-sm text-red-500 dark:text-red-400 py-2 px-4">
+            {sessionError}
+          </div>
+        )}
 
         <ScrollArea className="h-[calc(100vh-16rem)] p-3 dark:bg-gray-950">
           <div className="space-y-2 dark:bg-gray-950">

@@ -30,6 +30,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMultiPage, setIsMultiPage] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [zoomError, setZoomError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -86,8 +87,15 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
   const changePage = (offset: number) =>
     setPageNumber(p => Math.min(Math.max(1, p + offset), numPages));
 
-  const changeScale = (delta: number) =>
-    setScale(s => Math.min(Math.max(0.5, s + delta), 2.0));
+  const changeScale = (delta: number) => {
+    const newScale = scale + delta;
+    if (newScale > 1.0) {
+      setZoomError("Maximum zoom level is 100%");
+      setTimeout(() => setZoomError(null), 3000);
+      return;
+    }
+    setScale(Math.min(Math.max(0.5, newScale), 1.0));
+  };
 
   if (!file) {
     return (
@@ -159,11 +167,16 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
                 <ZoomOut className="h-4 w-4" />
               </Button>
               <span className="text-sm w-12 text-center">{Math.round(scale * 100)}%</span>
-              <Button variant="ghost" size="icon" onClick={() => changeScale(0.1)} disabled={scale >= 2.0}>
+              <Button variant="ghost" size="icon" onClick={() => changeScale(0.1)} disabled={scale >= 1.0}>
                 <ZoomIn className="h-4 w-4" />
               </Button>
             </div>
           </div>
+          {zoomError && (
+            <div className="text-center text-sm text-red-500 dark:text-red-400 py-1">
+              {zoomError}
+            </div>
+          )}
         </div>
 
         {/* Scrollable PDF Content */}
