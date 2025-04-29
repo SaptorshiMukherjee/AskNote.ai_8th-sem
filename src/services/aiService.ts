@@ -5,14 +5,16 @@ const openai = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: import.meta.env.VITE_OPENROUTER_API_KEY,
   defaultHeaders: {
-    "HTTP-Referer": import.meta.env.VITE_SITE_URL,
-    "X-Title": import.meta.env.VITE_SITE_NAME,
+    'HTTP-Referer': import.meta.env.VITE_SITE_URL,
+    'X-Title': import.meta.env.VITE_SITE_NAME,
   },
-  dangerouslyAllowBrowser: true
+  dangerouslyAllowBrowser: true,
 });
 
-// Function to identify tone in the user's query (e.g., casual, thanks, greeting, etc.)
-const detectTone = async (text: string): Promise<'greeting' | 'goodbye' | 'thanks' | 'topic' | 'casual'> => {
+// Function to detect the tone in user's query
+const detectTone = async (
+  text: string
+): Promise<'greeting' | 'goodbye' | 'thanks' | 'topic' | 'casual'> => {
   const tonePrompt = `
 Classify the tone of this user message strictly into one of the following categories:
 - "greeting" (e.g., "hey", "how are you", "hello")
@@ -28,8 +30,8 @@ Answer:
   `;
 
   const result = await openai.chat.completions.create({
-    model: "meta-llama/llama-4-maverick:free",
-    messages: [{ role: "user", content: tonePrompt }],
+    model: 'meta-llama/llama-4-maverick:free',
+    messages: [{ role: 'user', content: tonePrompt }],
     temperature: 0.2,
   });
 
@@ -37,11 +39,12 @@ Answer:
 };
 
 // Function to fetch external Google and YouTube links
-export const findExternalResources = (topic: string): { google: string, youtube: string } => {
+export const findExternalResources = (topic: string): { google: string; youtube: string } => {
   const encodedTopic = encodeURIComponent(topic);
+
   return {
     google: `https://www.google.com/search?q=${encodedTopic}`,
-    youtube: `https://www.youtube.com/results?search_query=${encodedTopic}`
+    youtube: `https://www.youtube.com/results?search_query=${encodedTopic}`,
   };
 };
 
@@ -56,10 +59,9 @@ export const generateAnswer = async (
       return "Oops! Looks like there's no content to work with. 🤔 Please upload a document so I can help you out! 📄";
     }
 
-    // Detect tone of the question
     const tone = await detectTone(question);
 
-    // Handle different tones of speech
+    // Handle different tones
     if (tone === 'greeting') {
       return "Hey there! 👋 I'm doing awesome — just hanging out in the cloud ☁️ and ready to assist you. What can I help you with today? 😊";
     }
@@ -79,6 +81,7 @@ export const generateAnswer = async (
     if (tone === 'topic') {
       const prompt = `
 You're a modern, expert-level assistant with a friendly vibe. You explain complex topics in a way that's easy to understand, while keeping things casual and fun! Your answers should:
+
 - Use **headings** to organize key concepts 📑
 - Include **bullet points** for lists ✔️
 - Add **emojis** to keep it engaging 🎉
@@ -91,31 +94,44 @@ And the user’s question:
 ${question}
 
 Answer:
-`;
+      `;
 
       const completion = await openai.chat.completions.create({
-        model: "meta-llama/llama-4-maverick:free",
+        model: 'meta-llama/llama-4-maverick:free',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
+        temperature: 0.7,
       });
 
       const aiAnswer = completion.choices?.[0]?.message?.content || "Oops! Something went wrong. 😬 Try again!";
 
       const pagesNote = pages.length
         ? `\n\n📄 This info came from page${pages.length > 1 ? 's' : ''} ${pages.join(', ')}.`
-        : ``;
+        : '';
 
-      // Add external resources if it's a topic-related question
       const { google, youtube } = findExternalResources(question);
-      const externalResources = `\n\n🔍 **External resources**:\n- [Google Search](${google})\n- [YouTube Videos](${youtube})`;
 
-      return `💡 **Answer for your question:**\n\n${aiAnswer}${pagesNote}${externalResources}\n\n✨ Let me know if you'd like to dive deeper! 😊`;
+      const externalResources = `
+🔍 **External resources**:
+- [Google Search](${google})
+- [YouTube Videos](${youtube})
+      `;
+
+      return `
+💡 **Answer for your question:** 
+
+${aiAnswer}
+
+${pagesNote}
+
+${externalResources}
+
+✨ Let me know if you'd like to dive deeper! 😊
+      `;
     }
-    
+
     return "Sorry, I didn't quite catch that. Can you rephrase or ask something else? 🤔";
-    
   } catch (error) {
-    console.error("Error fetching answer:", error);
+    console.error('Error fetching answer:', error);
     return "⚠️ Oops! Something went wrong while processing your question. Try again later. 😕";
   }
 };
