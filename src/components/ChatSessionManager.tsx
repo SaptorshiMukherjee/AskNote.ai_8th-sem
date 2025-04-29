@@ -1,10 +1,33 @@
-
 import React, { useState, useEffect } from 'react';
-import { Trash2, FileText, Plus } from 'lucide-react';
+import { Trash2, FileText, Plus, BookOpen, HelpCircle, ListOrdered, BookmarkIcon, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DocumentUploader from '@/components/DocumentUploader';
 import { useToast } from '@/hooks/use-toast';
+
+export interface StudyMaterial {
+  summary?: string;
+  suggestedQuestions?: Array<{
+    question: string;
+    pageReference?: number;
+    sectionReference?: string;
+  }>;
+  breakdown?: Array<{
+    title: string;
+    content: string;
+    pageReference?: number;
+  }>;
+  practiceQuestions?: Array<{
+    question: string;
+    difficulty: 'easy' | 'medium' | 'hard';
+    pageReference?: number;
+  }>;
+  studyGuide?: Array<{
+    topic: string;
+    keyPoints: string[];
+    pageReference?: number;
+  }>;
+}
 
 export interface ChatSession {
   id: string;
@@ -12,6 +35,7 @@ export interface ChatSession {
   messages: ChatMessage[];
   documentName?: string;
   createdAt: Date;
+  studyMaterial?: StudyMaterial;
 }
 
 export interface ChatMessage {
@@ -90,28 +114,31 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background dark:bg-gray-950">
       {/* Main Document Uploader */}
-      <div className="border-b p-4">
-        <h3 className="text-sm font-medium mb-2">Upload Document</h3>
-        <DocumentUploader 
-          onFileUpload={(file) => handleFileUploadForSession(file)} 
-          isLoading={isLoading}
-        />
+      <div className="flex-none border-b border-blue-100 dark:border-blue-900 p-3">
+        <h3 className="text-sm font-medium mb-1 text-foreground dark:text-white">Upload Document</h3>
+        <div className="h-[120px]">
+          <DocumentUploader 
+            onFileUpload={(file) => handleFileUploadForSession(file)} 
+            isLoading={isLoading}
+          />
+        </div>
       </div>
       
       {/* Chat History Section */}
       <div className="flex-1 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-sm font-medium">
+        <div className="flex items-center justify-between p-3 border-b border-blue-100 dark:border-blue-900">
+          <h3 className="text-sm font-medium text-foreground dark:text-white">
             Chat History ({sessions.length}/20)
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={onCreateNewSession}
               disabled={isLoading}
+              className="dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/50"
             >
               <Plus className="h-4 w-4 mr-1" />
               New Chat
@@ -121,54 +148,225 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
               size="sm" 
               onClick={onDeleteAllSessions}
               disabled={isLoading || sessions.length === 0}
-              className="text-red-500 hover:bg-red-100"
+              className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <ScrollArea className="h-[calc(100%-56px)]">
-          <div className="p-2 space-y-1">
+        <ScrollArea className="h-[calc(100vh-16rem)] p-3">
+          <div className="space-y-2">
             {sessions.map(session => (
-              <div 
-                key={session.id}
-                className={`group p-2 rounded-md flex items-center justify-between cursor-pointer hover:bg-gray-100 ${
-                  activeSessionId === session.id ? 'bg-blue-50 border-l-2 border-blue-500' : ''
-                }`}
-                onClick={() => onSelectSession(session.id)}
-              >
-                <div className="flex items-center truncate flex-1">
-                  <FileText className="h-4 w-4 mr-2 flex-shrink-0 text-gray-500" />
-                  <span className="truncate text-sm">
-                    {getSessionName(session)}
-                  </span>
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteSession(session.id);
-                  }}
+              <div key={session.id}>
+                <div 
+                  className={`group p-2 rounded-md flex items-center justify-between cursor-pointer 
+                    hover:bg-gray-100 dark:hover:bg-blue-900/30
+                    ${activeSessionId === session.id 
+                      ? 'bg-blue-50 dark:bg-blue-900/50 border-l-2 border-blue-500 dark:border-blue-400' 
+                      : ''
+                    }`}
+                  onClick={() => onSelectSession(session.id)}
                 >
-                  <Trash2 className="h-3 w-3 text-red-500" />
-                </Button>
-              </div>
-            ))}
+                  <div className="flex items-center truncate flex-1">
+                    <FileText className="h-4 w-4 mr-2 flex-shrink-0 text-gray-500 dark:text-blue-400" />
+                    <span className="truncate text-sm text-foreground dark:text-blue-100">
+                      {getSessionName(session)}
+                    </span>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0 dark:hover:bg-blue-900/50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteSession(session.id);
+                    }}
+                  >
+                    <Trash2 className="h-3 w-3 text-red-500 dark:text-red-400" />
+                  </Button>
+                </div>
 
-            {sessions.length === 0 && (
-              <div className="text-center p-4 text-gray-500 text-sm">
-                No chat history yet
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
-  );
-};
+                {/* Study Material Section */}
+                {activeSessionId === session.id && session.studyMaterial && (
+                  <div className="ml-6 mt-3 space-y-6 text-sm">
+                    {/* Container with gradient border */}
+                    <div className="relative p-4 rounded-lg bg-gradient-to-r from-blue-50 to-white dark:from-gray-900 dark:to-gray-900/90 shadow-sm">
+                      {/* Decorative elements */}
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-t-lg" />
+                      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500/20 to-transparent rounded-l-lg" />
 
-export default ChatSessionManager;
+                      {/* Summary Section with new styling */}
+                      {session.studyMaterial.summary && (
+                        <div className="space-y-3 mb-6">
+                          <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
+                            <BookOpen className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400" />
+                            Document Summary
+                          </h4>
+                          <div className="relative">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-200 dark:bg-blue-800 rounded-full" />
+                            <p className="text-gray-700 dark:text-blue-200 text-base leading-relaxed pl-6">
+                              {session.studyMaterial.summary}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Suggested Questions Section with enhanced interactivity */}
+                      {session.studyMaterial.suggestedQuestions && (
+                        <div className="space-y-4 mb-6">
+                          <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
+                            <HelpCircle className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400" />
+                            Key Questions to Explore
+                          </h4>
+                          <ul className="space-y-3 pl-4">
+                            {session.studyMaterial.suggestedQuestions.map((item, idx) => (
+                              <li 
+                                key={idx}
+                                className="group relative transform transition-all duration-200 hover:-translate-y-0.5"
+                              >
+                                <div className="flex items-start gap-3 p-3 rounded-lg bg-white/50 dark:bg-gray-800/30 hover:bg-blue-50/50 dark:hover:bg-blue-900/30 transition-colors">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                                    {idx + 1}
+                                  </span>
+                                  <div className="space-y-1.5 flex-1">
+                                    <p 
+                                      className="text-gray-800 dark:text-blue-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 cursor-pointer transition-colors text-base"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Add logic to send question to chat
+                                      }}
+                                    >
+                                      {item.question}
+                                    </p>
+                                    {(item.pageReference || item.sectionReference) && (
+                                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                        <Link2 className="h-3 w-3" />
+                                        {item.pageReference && (
+                                          <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                                            Page {item.pageReference}
+                                          </span>
+                                        )}
+                                        {item.sectionReference && (
+                                          <>
+                                            {item.pageReference && <span>•</span>}
+                                            <span className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                                              {item.sectionReference}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Breakdown Section with cards */}
+                      {session.studyMaterial.breakdown && (
+                        <div className="space-y-4 mb-6">
+                          <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
+                            <ListOrdered className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400" />
+                            Content Breakdown
+                          </h4>
+                          <div className="grid gap-4 pl-4">
+                            {session.studyMaterial.breakdown.map((item, idx) => (
+                              <div 
+                                key={idx} 
+                                className="p-4 rounded-lg bg-white dark:bg-gray-800/30 shadow-sm hover:shadow-md transition-shadow"
+                              >
+                                <div className="flex items-center gap-3 mb-2">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                                    {idx + 1}
+                                  </span>
+                                  <h5 className="font-medium text-gray-900 dark:text-blue-300 flex items-center gap-2 flex-1">
+                                    {item.title}
+                                    {item.pageReference && (
+                                      <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                                        <Link2 className="h-3 w-3" />
+                                        Page {item.pageReference}
+                                      </span>
+                                    )}
+                                  </h5>
+                                </div>
+                                <p className="text-gray-600 dark:text-blue-200 pl-9">
+                                  {item.content}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Study Guide Section with enhanced layout */}
+                      {session.studyMaterial.studyGuide && (
+                        <div className="space-y-4 mb-6">
+                          <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
+                            <BookmarkIcon className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400" />
+                            Study Guide
+                          </h4>
+                          <div className="grid gap-6 pl-4">
+                            {session.studyMaterial.studyGuide.map((item, idx) => (
+                              <div 
+                                key={idx} 
+                                className="relative p-4 rounded-lg bg-white dark:bg-gray-800/30 shadow-sm"
+                              >
+                                <div className="flex items-center gap-3 mb-3">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                                    {idx + 1}
+                                  </span>
+                                  <h5 className="font-medium text-gray-900 dark:text-blue-300 flex items-center gap-2 flex-1">
+                                    {item.topic}
+                                    {item.pageReference && (
+                                      <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                                        <Link2 className="h-3 w-3" />
+                                        Page {item.pageReference}
+                                      </span>
+                                    )}
+                                  </h5>
+                                </div>
+                                <ul className="space-y-2 pl-9">
+                                  {item.keyPoints.map((point, pointIdx) => (
+                                    <li 
+                                      key={pointIdx} 
+                                      className="flex items-start gap-2 text-gray-600 dark:text-blue-200"
+                                    >
+                                      <span className="text-blue-500 dark:text-blue-400">•</span>
+                                      <span>{point}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Practice Questions Section with difficulty indicators */}
+                      {session.studyMaterial.practiceQuestions && (
+                        <div className="space-y-4">
+                          <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
+                            <HelpCircle className="h-5 w-5 mr-2 text-blue-500 dark:text-blue-400" />
+                            Practice Questions
+                          </h4>
+                          <ul className="grid gap-4 pl-4">
+                            {session.studyMaterial.practiceQuestions.map((item, idx) => (
+                              <li 
+                                key={idx}
+                                className="group transform transition-all duration-200 hover:-translate-y-0.5"
+                              >
+                                <div className="p-4 rounded-lg bg-white dark:bg-gray-800/30 shadow-sm">
+                                  <div className="flex items-start gap-3">
+                                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                                      {idx + 1}
+                                    </span>
+                                    <div className="space-y-2 flex-1">
+                                      <p className="text-gray-800 dark:text-blue-200 text-base">
+                                        {item.question}
+                                      </p>
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className={`

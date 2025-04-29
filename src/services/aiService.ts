@@ -80,12 +80,12 @@ export const generateAnswer = async (
 
     if (tone === 'topic') {
       const prompt = `
-You're a modern, expert-level assistant with a friendly vibe. You explain complex topics in a way that's easy to understand, while keeping things casual and fun! Your answers should:
+You're a modern, expert-level professor with a friendly vibe. You explain topics in a way that's easy to understand, while keeping things casual and fun! Your answers should:
 
-- Use **headings** to organize key concepts 📑
-- Include **bullet points** for lists ✔️
-- Add **emojis** to keep it engaging 🎉
-- Be **descriptive** and easy to digest 🧠
+- Use **headings** to organize key concepts and groups of information 📑
+- Include numbered points **bullet points** for listsor groups of information ✔️
+- Add less **emojis** to keep it engaging 🎉
+- Be **descriptive** and easy to understand 🧠
 
 Here’s the context from the document:
 ${context}
@@ -99,7 +99,7 @@ Answer:
       const completion = await openai.chat.completions.create({
         model: 'meta-llama/llama-4-maverick:free',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
+        temperature: 0.5,
       });
 
       const aiAnswer = completion.choices?.[0]?.message?.content || "Oops! Something went wrong. 😬 Try again!";

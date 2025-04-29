@@ -1,143 +1,207 @@
-
-import { useEffect, useState } from 'react';
-import * as pdfjsLib from 'pdfjs-dist';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { Button } from '@/components/ui/button';
-import { FileText, Search } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  LayoutGrid,
+} from 'lucide-react';
 
-// Set the PDF.js worker path
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+if (typeof window !== 'undefined' && pdfjs.GlobalWorkerOptions) {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+}
 
 interface PDFViewerProps {
   file: File | null;
 }
 
 const PDFViewer = ({ file }: PDFViewerProps) => {
-  const [numPages, setNumPages] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageRendering, setPageRendering] = useState<boolean>(false);
-  const [pageText, setPageText] = useState<string>('');
-  const [scale, setScale] = useState<number>(1.5);
+  const [numPages, setNumPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.0);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMultiPage, setIsMultiPage] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!file) return;
+    if (!containerRef.current) return;
 
-    const loadPDF = async () => {
-      try {
-        const fileReader = new FileReader();
-        
-        fileReader.onload = async function() {
-          const typedArray = new Uint8Array(this.result as ArrayBuffer);
-          const loadingTask = pdfjsLib.getDocument({ data: typedArray });
-          const pdf = await loadingTask.promise;
-          
-          setNumPages(pdf.numPages);
-          
-          // Load the first page by default
-          if (pdf.numPages > 0) {
-            renderPage(pdf, 1);
-          }
-        };
-        
-        fileReader.readAsArrayBuffer(file);
-      } catch (error) {
-        console.error('Error loading PDF:', error);
+    const resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
       }
-    };
+    });
 
-    loadPDF();
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const createPdfUrl = useCallback(() => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPdfUrl(url);
+    setError(null);
+    setIsLoading(false);
   }, [file]);
 
-  const renderPage = async (pdf: pdfjsLib.PDFDocumentProxy, pageNumber: number) => {
-    if (pageRendering) return;
-    
-    setPageRendering(true);
-    
-    try {
-      const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
-      const page = await pdf.getPage(pageNumber);
-      
-      const viewport = page.getViewport({ scale });
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-      
-      const renderContext = {
-        canvasContext: canvas.getContext('2d')!,
-        viewport: viewport
-      };
-      
-      await page.render(renderContext).promise;
-
-      // Extract text from the page
-      const textContent = await page.getTextContent();
-      const textItems = textContent.items.map(item => 'str' in item ? item.str : '');
-      setPageText(textItems.join(' '));
-      
-      setCurrentPage(pageNumber);
-      setPageRendering(false);
-    } catch (error) {
-      console.error('Error rendering page:', error);
-      setPageRendering(false);
-    }
-  };
-
-  const changePage = async (offset: number) => {
-    const newPage = currentPage + offset;
-    
-    if (newPage < 1 || newPage > numPages) return;
-    
+  useEffect(() => {
     if (file) {
-      const fileReader = new FileReader();
-      
-      fileReader.onload = async function() {
-        const typedArray = new Uint8Array(this.result as ArrayBuffer);
-        const loadingTask = pdfjsLib.getDocument({ data: typedArray });
-        const pdf = await loadingTask.promise;
-        
-        renderPage(pdf, newPage);
-      };
-      
-      fileReader.readAsArrayBuffer(file);
+      setIsLoading(true);
+      createPdfUrl();
     }
+    return () => {
+      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+    };
+  }, [file]);
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+    setPageNumber(1);
+    setError(null);
+    setIsLoading(false);
   };
+
+  const onDocumentLoadError = (err: Error) => {
+    setError('Failed to load PDF.');
+    console.error(err);
+    setIsLoading(false);
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    setIsLoading(true);
+    createPdfUrl();
+  };
+
+  const changePage = (offset: number) =>
+    setPageNumber(p => Math.min(Math.max(1, p + offset), numPages));
+
+  const changeScale = (delta: number) =>
+    setScale(s => Math.min(Math.max(0.5, s + delta), 2.0));
 
   if (!file) {
-    return <div className="text-center p-8 text-gray-500">No PDF file loaded</div>;
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+        No PDF uploaded
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-red-500 dark:text-red-400">
+        {error}
+        <Button onClick={handleRetry} className="mt-4" variant="outline">
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full overflow-hidden">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium truncate">
-          {file.name}
-        </h3>
-        <div className="text-sm text-gray-500">
-          Page {currentPage} of {numPages}
-        </div>
+    <div className="flex h-full bg-gray-50 dark:bg-gray-900">
+      {/* Page Numbers Sidebar */}
+      <div className="w-12 flex-shrink-0 border-r border-gray-200 dark:border-gray-800">
+        <ScrollArea className="h-full scrollbar-none" type="hover">
+          <div className="p-1">
+            {Array.from(new Array(numPages), (_, i) => (
+              <div
+                key={`page_${i + 1}`}
+                className={`
+                  flex items-center justify-center p-1 mb-0.5 rounded cursor-pointer
+                  transition-colors duration-200 text-sm
+                  ${i + 1 === pageNumber 
+                    ? 'bg-blue-500 text-white' 
+                    : 'hover:bg-blue-100 dark:hover:bg-blue-900'
+                  }
+                `}
+                onClick={() => {
+                  setPageNumber(i + 1);
+                  setIsMultiPage(false);
+                }}
+              >
+                {i + 1}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
-      
-      <div className="border border-gray-200 rounded-lg p-4 overflow-hidden bg-white">
-        <div className="flex justify-center min-h-[500px]">
-          <canvas id="pdf-canvas" className="max-w-full"></canvas>
+
+      {/* PDF Viewer */}
+      <div className="flex-1 flex flex-col overflow-hidden" ref={containerRef}>
+        {/* Fixed Controls */}
+        <div className="flex-none border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
+          <div className="flex items-center justify-between p-2">
+            <div className="flex items-center space-x-1">
+              <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm min-w-[80px] text-center">
+                {pageNumber}/{numPages}
+              </span>
+              <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={pageNumber >= numPages}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsMultiPage(m => !m)}>
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => changeScale(-0.1)} disabled={scale <= 0.5}>
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="text-sm w-12 text-center">{Math.round(scale * 100)}%</span>
+              <Button variant="ghost" size="icon" onClick={() => changeScale(0.1)} disabled={scale >= 2.0}>
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div className="flex justify-center mt-4 space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => changePage(-1)}
-          disabled={currentPage <= 1 || pageRendering}
-        >
-          <FileText className="h-4 w-4 mr-1" /> Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => changePage(1)}
-          disabled={currentPage >= numPages || pageRendering}
-        >
-          Next <FileText className="h-4 w-4 ml-1" />
-        </Button>
+
+        {/* Scrollable PDF Content */}
+        <div className="flex-1 overflow-y-auto scrollbar-none">
+          <div className="flex flex-col items-center py-4 max-w-full">
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={<p className="text-gray-500 dark:text-gray-400">Loading PDF…</p>}
+            >
+              {isMultiPage
+                ? Array.from(new Array(numPages), (_, i) => (
+                    <div key={`page_${i + 1}`} className="mb-4 px-4 w-full max-w-5xl">
+                      <Page
+                        pageNumber={i + 1}
+                        scale={scale}
+                        className="shadow-lg mx-auto"
+                        renderAnnotationLayer
+                        renderTextLayer
+                        width={Math.min(containerWidth - 48, 896)}
+                      />
+                    </div>
+                  ))
+                : (
+                  <div className="px-4 w-full max-w-5xl">
+                    <Page
+                      key={`page_${pageNumber}`}
+                      pageNumber={pageNumber}
+                      scale={scale}
+                      className="shadow-lg mx-auto"
+                      renderAnnotationLayer
+                      renderTextLayer
+                      width={Math.min(containerWidth - 48, 896)}
+                    />
+                  </div>
+                )}
+            </Document>
+          </div>
+        </div>
       </div>
     </div>
   );

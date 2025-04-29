@@ -1,0 +1,51 @@
+[data-theme='dark'] [data-sidebar='sidebar'] {
+  background-color: rgb(2, 6, 23) !important;
+  border-color: rgb(30, 58, 138) !important;
+}
+
+[data-theme='dark'] .bg-sidebar {
+  background-color: rgb(2, 6, 23) !important;
+}
+
+[data-theme='dark'] .text-sidebar-foreground {
+  color: rgb(219, 234, 254) !important;
+}
+
+[data-theme='dark'] .border-sidebar-border {
+  border-color: rgb(30, 58, 138) !important;
+}
+
+/* Additional dark mode styles for chat history and left bar */
+[data-theme='dark'] .group\/sidebar-wrapper {
+  background-color: rgb(2, 6, 23) !important;
+}
+
+[data-theme='dark'] [data-radix-scroll-area-viewport] {
+  background-color: rgb(2, 6, 23) !important;
+}
+
+[data-theme='dark'] .bg-background {
+  background-color: rgb(2, 6, 23) !important;
+}
+
+[data-theme='dark'] nav,
+[data-theme='dark'] aside,
+[data-theme='dark'] .bg-white {
+  background-color: rgb(2, 6, 23) !important;
+}
+
+[data-theme='dark'] .border-r,
+[data-theme='dark'] .border-l,
+[data-theme='dark'] .border-t,
+[data-theme='dark'] .border-b {
+  border-color: rgb(30, 58, 138) !important;
+}
+
+[data-theme='dark'] [role="dialog"] {
+  background-color: rgb(2, 6, 23) !important;
+}
+
+/* Ensure all white backgrounds are converted to dark */
+[data-theme='dark'] *[class*="bg-white"] {
+  background-color: rgb(2, 6, 23) !important;
+} 

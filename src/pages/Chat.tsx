@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -23,12 +22,16 @@ const Chat = () => {
   
   // Documents state - map session ID to its document content
   const [sessionDocuments, setSessionDocuments] = useState<Record<string, {text: string, name: string}>>({});
+  const [sessionPDFs, setSessionPDFs] = useState<Record<string, File>>({});
 
   // Get active session
   const activeSession = sessions.find(session => session.id === activeSessionId) || null;
   
   // Get active document text
   const activePdfText = activeSessionId ? sessionDocuments[activeSessionId]?.text || '' : '';
+  
+  // Get active PDF file
+  const activePdfFile = activeSessionId ? sessionPDFs[activeSessionId] || null : null;
   
   // Initialize with welcome message when component mounts
   useEffect(() => {
@@ -111,9 +114,25 @@ const Chat = () => {
     setIsLoading(true);
     
     try {
+      if (!file) {
+        throw new Error('No file selected');
+      }
+
+      if (file.size === 0) {
+        throw new Error('The selected file is empty');
+      }
+
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        throw new Error('File size too large. Please upload a PDF smaller than 50MB');
+      }
+
       // Extract text from PDF
       const result = await extractTextFromPDF(file);
       
+      if (!result || !result.fullText) {
+        throw new Error('Could not extract text from the PDF. The file might be corrupted or password protected.');
+      }
+
       // Determine which session to use
       let targetSessionId = sessionId;
       
@@ -138,10 +157,14 @@ const Chat = () => {
         targetSessionId = newSessionId;
       }
       
-      // Store document text
+      // Store document text and file
       setSessionDocuments(prev => ({
         ...prev,
         [targetSessionId]: { text: result.fullText, name: file.name }
+      }));
+      setSessionPDFs(prev => ({
+        ...prev,
+        [targetSessionId]: file
       }));
       
       toast({
@@ -149,12 +172,33 @@ const Chat = () => {
         description: "Document uploaded successfully. Ready to chat!",
       });
     } catch (error) {
-      console.error('Error extracting text:', error);
+      console.error('Error processing document:', error);
+      
+      // Get a user-friendly error message
+      let errorMessage = 'Failed to process the document. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to process the document. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
+
+      // Clean up any partial session that might have been created
+      if (sessionId) {
+        setSessionDocuments(prev => {
+          const newDocs = { ...prev };
+          delete newDocs[sessionId];
+          return newDocs;
+        });
+        setSessionPDFs(prev => {
+          const newPDFs = { ...prev };
+          delete newPDFs[sessionId];
+          return newPDFs;
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -235,19 +279,21 @@ const Chat = () => {
 
   // Delete a single chat session
   const deleteSession = (sessionId: string) => {
-    // Remove the session
     setSessions(prev => prev.filter(session => session.id !== sessionId));
-    
-    // Clean up document data
     setSessionDocuments(prev => {
       const newDocs = { ...prev };
       delete newDocs[sessionId];
       return newDocs;
     });
+    setSessionPDFs(prev => {
+      const newPDFs = { ...prev };
+      delete newPDFs[sessionId];
+      return newPDFs;
+    });
     
-    // If active session is deleted, set active to next available
     if (activeSessionId === sessionId) {
-      setActiveSessionId(sessions.find(s => s.id !== sessionId)?.id || null);
+      const remainingSessions = sessions.filter(session => session.id !== sessionId);
+      setActiveSessionId(remainingSessions.length > 0 ? remainingSessions[0].id : null);
     }
     
     toast({
@@ -260,6 +306,7 @@ const Chat = () => {
   const deleteAllSessions = () => {
     setSessions([]);
     setSessionDocuments({});
+    setSessionPDFs({});
     setActiveSessionId(null);
     
     // Clear localStorage
@@ -323,6 +370,7 @@ const Chat = () => {
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
                 pdfText={activePdfText}
+                pdfFile={activePdfFile}
               />
             ) : (
               <div className="h-full flex items-center justify-center">

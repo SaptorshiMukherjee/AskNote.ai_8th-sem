@@ -63,13 +63,13 @@ const DocumentUploader = ({ onFileUpload, isLoading }: DocumentUploaderProps) =>
   return (
     <div
       className={cn(
-        "border-2 border-dashed rounded-xl p-4 text-center transition-all duration-300",
-        "hover:border-primary hover:shadow-lg hover:scale-[1.02]",
-        "dark:border-gray-700 dark:hover:border-blue-500",
-        "bg-gradient-to-br from-background to-background/50 backdrop-blur-sm",
+        "border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300",
+        "hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100",
+        "bg-gradient-to-br from-blue-50 to-white",
+        "dark:from-blue-950 dark:to-gray-950 dark:border-blue-800/50 dark:hover:border-blue-600 dark:hover:shadow-blue-900/50",
         isDragging 
-          ? "border-blue-500 bg-blue-50/10" 
-          : "border-gray-200",
+          ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30" 
+          : "border-blue-200 dark:border-blue-800/30",
         "transform transition-transform duration-200 ease-in-out"
       )}
       onDragOver={handleDragOver}
@@ -84,14 +84,18 @@ const DocumentUploader = ({ onFileUpload, isLoading }: DocumentUploaderProps) =>
         onChange={handleFileSelect}
       />
       <div className="relative">
-        <FileText className="mx-auto h-8 w-8 text-primary mb-2 transform transition-transform group-hover:scale-110 duration-200" />
-        <h3 className="text-base font-medium mb-2">
-          📄 Upload Document
+        <FileText className="mx-auto h-12 w-12 text-blue-500 dark:text-blue-400 mb-4 transform transition-transform group-hover:scale-110 duration-200" />
+        <h3 className="text-lg font-medium mb-3 text-blue-900 dark:text-white">
+          Upload Your Document
         </h3>
+        <p className="text-blue-600 dark:text-blue-400 mb-4 text-sm">
+          Drag and drop your PDF file here or click to browse
+        </p>
         <Button 
           onClick={handleButtonClick} 
           disabled={isLoading}
-          className="bg-primary hover:bg-primary/90 transition-all duration-200 transform hover:scale-105"
+          className="bg-blue-500 hover:bg-blue-600 text-white transition-all duration-200 transform hover:scale-105 px-6
+                   dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
         >
           {isLoading ? 'Processing...' : 'Choose File'}
         </Button>
