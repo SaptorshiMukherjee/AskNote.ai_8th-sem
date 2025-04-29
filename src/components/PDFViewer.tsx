@@ -31,6 +31,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
   const [isMultiPage, setIsMultiPage] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -166,7 +167,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
         </div>
 
         {/* Scrollable PDF Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" ref={scrollRef}>
           <div className="flex flex-col items-center py-4 max-w-full">
             <Document
               file={pdfUrl}

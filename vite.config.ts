@@ -25,12 +25,25 @@ export default defineConfig(({ mode }) => ({
   },
 
   optimizeDeps: {
-    include: ['react-pdf'],
+    include: ['react-pdf', 'pdfjs-dist'],
+    esbuildOptions: {
+      target: 'esnext',
+    },
   },
 
   build: {
     commonjsOptions: {
-      include: [/react-pdf/],
+      include: [/react-pdf/, /pdfjs-dist/],
+      transform: {
+        include: [/react-pdf/, /pdfjs-dist/],
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'pdfjs': ['pdfjs-dist'],
+        },
+      },
     },
   },
 }));
