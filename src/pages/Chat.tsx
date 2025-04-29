@@ -162,6 +162,8 @@ const Chat = () => {
         ...prev,
         [targetSessionId]: { text: result.fullText, name: file.name }
       }));
+      
+      // Store PDF file
       setSessionPDFs(prev => ({
         ...prev,
         [targetSessionId]: file
@@ -329,11 +331,11 @@ const Chat = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Navbar />
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar */}
-        <div className="w-64 border-r bg-gray-50 flex flex-col">
+        <div className="w-64 border-r bg-gray-50 dark:bg-gray-950 flex flex-col overflow-hidden h-[calc(100vh-4rem)]">
           <ChatSessionManager
             onFileUpload={handleFileUpload}
             isLoading={isLoading}
@@ -347,23 +349,23 @@ const Chat = () => {
         </div>
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          <div className="border-b p-4 flex justify-between items-center">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="border-b p-4 flex justify-between items-center h-16">
             <Button 
               variant="ghost" 
-              className="flex items-center text-gray-600"
+              className="flex items-center text-gray-600 dark:text-gray-300"
               onClick={handleBack}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <div className="text-lg font-medium">
+            <div className="text-lg font-medium dark:text-white">
               {activeSession?.name || 'AskNoteBot'}
             </div>
             <div className="w-24"></div> {/* Spacer for alignment */}
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             {activeSessionId ? (
               <ChatInterface 
                 messages={activeSession?.messages || []}
@@ -375,7 +377,7 @@ const Chat = () => {
             ) : (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center p-8 rounded-lg max-w-md">
-                  <h3 className="text-xl font-semibold mb-2">
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">
                     Please upload a document or create a new chat
                   </h3>
                 </div>

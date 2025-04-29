@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Send, Download, Bot, User, Sparkles, FileText } from 'lucide-react';
+import { MessageSquare, Send, Download, Bot, User, Sparkles, FileText, X, RefreshCw, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
 import { ChatMessage } from './ChatSessionManager';
@@ -15,21 +15,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import PDFViewer from '@/components/PDFViewer';
+import { extractTextFromPDF } from '@/services/pdfService';
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
-  onSendMessage: (message: string) => Promise<void>;
+  onSendMessage: (message: string) => void;
   isLoading: boolean;
-  pdfText: string;
-  pdfFile: File | null;
+  pdfText?: string;
+  pdfFile?: File | null;
 }
 
-const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }: ChatInterfaceProps) => {
+const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pdfText, pdfFile }: ChatInterfaceProps) => {
   const [inputValue, setInputValue] = useState('');
+  const [showPDF, setShowPDF] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const [showPDF, setShowPDF] = useState(false);
+
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -42,68 +48,18 @@ const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }:
   // Generate suggested questions based on PDF content
   useEffect(() => {
     if (pdfText) {
-      console.log('Generating new questions for updated PDF');
-      // Clear existing questions first
-      setSuggestedQuestions([]);
-      // Generate new questions with a slight delay to ensure state update
-      setTimeout(() => {
-        const questions = generateQuestionsFromContent(pdfText);
-        setSuggestedQuestions(questions);
-      }, 100);
+      const questions = [
+        'What is this document about?',
+        'Can you summarize the main points?',
+        'What are the main arguments presented?',
+        'Are there any important dates or events mentioned?',
+        'What are the conclusions or recommendations?'
+      ];
+      setSuggestedQuestions(questions);
     } else {
       setSuggestedQuestions([]);
     }
-  }, [pdfText]); // This will trigger whenever pdfText changes
-
-  const generateQuestionsFromContent = (content: string): string[] => {
-    const questions: string[] = [];
-    
-    // Add basic questions first
-    questions.push("What is this document about?");
-    questions.push("Can you summarize the main points?");
-    
-    // Check for specific content types and add relevant questions
-    if (content.toLowerCase().includes("deadline") || content.toLowerCase().includes("date")) {
-      questions.push("What are the important dates and deadlines mentioned?");
-    }
-    
-    if (content.toLowerCase().includes("requirement") || content.toLowerCase().includes("specification")) {
-      questions.push("What are the main requirements outlined in this document?");
-    }
-    
-    if (content.toLowerCase().includes("chapter") || content.toLowerCase().includes("section")) {
-      questions.push("What are the main sections or chapters in this document?");
-    }
-    
-    if (content.toLowerCase().includes("conclusion")) {
-      questions.push("What are the key conclusions or findings?");
-    }
-
-    if (content.toLowerCase().includes("reference") || content.toLowerCase().includes("bibliography")) {
-      questions.push("What are the key references cited in this document?");
-    }
-
-    if (content.toLowerCase().includes("table") || content.toLowerCase().includes("figure")) {
-      questions.push("What are the key tables or figures in this document?");
-    }
-
-    if (content.toLowerCase().includes("method") || content.toLowerCase().includes("methodology")) {
-      questions.push("What methods or methodologies are discussed in this document?");
-    }
-
-    if (content.toLowerCase().includes("result") || content.toLowerCase().includes("finding")) {
-      questions.push("What are the main results or findings?");
-    }
-
-    // Add general comprehension questions
-    questions.push("Could you explain the main concepts in simpler terms?");
-    questions.push("What are the most important takeaways from this document?");
-    questions.push("Are there any key terms or definitions I should know?");
-
-    // Remove any duplicate questions and limit to 10
-    const uniqueQuestions = Array.from(new Set(questions));
-    return uniqueQuestions.slice(0, 10);
-  };
+  }, [pdfText]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +109,7 @@ const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }:
     const chatContent = messages
       .map(msg => `${msg.sender === 'user' ? 'You' : 'AskNoteBot'}: ${msg.text}\n`)
       .join('\n');
-
+    
     const blob = new Blob([chatContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -166,13 +122,13 @@ const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }:
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-gray-950 border-r border-gray-100 dark:border-gray-800">
+      <div className="flex-1 flex flex-col relative">
         {/* Header */}
-        <div className="flex-none h-12 flex justify-between items-center px-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chat</h2>
-          <div className="flex items-center gap-2">
+        <div className="flex-none flex justify-between items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950 z-10">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chat</h2>
             {pdfFile && (
               <Button
                 variant="ghost"
@@ -184,115 +140,139 @@ const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }:
                 {showPDF ? 'Hide PDF' : 'View PDF'}
               </Button>
             )}
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownloadChat}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              >
+                <Download className="h-4 w-4" />
+                Download Chat
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleDownloadChat}
+              onClick={() => window.location.reload()}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-              disabled={messages.length === 0}
             >
-              <Download className="h-4 w-4" />
-              Download Chat
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMessages([])}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Chat
             </Button>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex overflow-hidden">
           {/* Chat Messages */}
           <div className={`flex flex-col ${showPDF ? 'w-1/2' : 'w-full'}`}>
-            <div className="flex-1 px-4 py-2 overflow-y-auto scrollbar-none">
-              <div className="space-y-4 max-w-3xl mx-auto">
-                {messages.length === 0 ? (
-                  <div className="h-full flex items-center justify-center">
-                    <div className="text-center p-4 rounded-lg max-w-md">
-                      <MessageSquare className="mx-auto h-10 w-10 text-blue-600 dark:text-blue-500 mb-3 opacity-80" />
-                      <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Start a conversation</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {pdfText ? 'Ask questions about your document to get started' : 'Upload a document to get started'}
-                      </p>
+            <ScrollArea className="flex-1">
+              <div className="px-4 py-2">
+                <div className="space-y-4 max-w-3xl mx-auto">
+                  {messages.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center p-4 rounded-lg max-w-md">
+                        <MessageSquare className="mx-auto h-10 w-10 text-blue-600 dark:text-blue-500 mb-3 opacity-80" />
+                        <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Start a conversation</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          {pdfText ? 'Ask questions about your document to get started' : 'Upload a document to start chatting'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    {messages.map((message, index) => (
-                      <div
-                        key={message.id}
-                        className={`flex items-start gap-4 ${
-                          message.sender === 'bot' ? 'justify-start' : 'justify-end'
-                        }`}
-                      >
-                        {message.sender === 'bot' && (
+                  ) : (
+                    <>
+                      {messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex items-start gap-4 ${message.sender === 'bot' ? 'justify-start' : 'justify-end'}`}
+                        >
+                          {message.sender === 'bot' && (
+                            <Avatar className="h-8 w-8 mt-1">
+                              <AvatarFallback className="bg-blue-600 text-white">
+                                <Bot className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div
+                            className={`group relative flex flex-col max-w-[85%] ${message.sender === 'bot' ? 'items-start' : 'items-end'}`}
+                          >
+                            <div
+                              className={`px-4 py-3 rounded-2xl ${
+                                message.sender === 'bot'
+                                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-tl-sm'
+                                  : 'bg-blue-600 text-white rounded-tr-sm'
+                              }`}
+                            >
+                              <div className={`prose ${message.sender === 'user' ? 'prose-invert' : 'dark:prose-invert'} max-w-none`}>
+                                <ReactMarkdown>{message.text}</ReactMarkdown>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          {message.sender === 'user' && (
+                            <Avatar className="h-8 w-8 mt-1">
+                              <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                <User className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                          )}
+                        </div>
+                      ))}
+                      {isLoading && (
+                        <div className="flex items-start gap-4 justify-start">
                           <Avatar className="h-8 w-8 mt-1">
                             <AvatarFallback className="bg-blue-600 text-white">
                               <Bot className="h-4 w-4" />
                             </AvatarFallback>
                           </Avatar>
-                        )}
-                        <div
-                          className={`group relative flex flex-col max-w-[85%] ${
-                            message.sender === 'bot' 
-                              ? 'items-start' 
-                              : 'items-end'
-                          }`}
-                        >
-                          <div
-                            className={`px-4 py-3 rounded-2xl ${
-                              message.sender === 'bot'
-                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-tl-sm'
-                                : 'bg-blue-600 text-white rounded-tr-sm'
-                            }`}
-                          >
-                            <div
-                              className={`prose ${
-                                message.sender === 'user' 
-                                  ? 'prose-invert' 
-                                  : 'dark:prose-invert'
-                              } max-w-none`}
-                            >
-                              <ReactMarkdown>
-                                {message.text}
-                              </ReactMarkdown>
+                          <div className="group relative flex flex-col max-w-[85%] items-start">
+                            <div className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-tl-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" />
+                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-bounce delay-100" />
+                                <div className="w-2 h-2 rounded-full bg-blue-600 animate-bounce delay-200" />
+                              </div>
                             </div>
                           </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {message.timestamp.toLocaleTimeString([], { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </span>
                         </div>
-                        {message.sender === 'user' && (
-                          <Avatar className="h-8 w-8 mt-1">
-                            <AvatarFallback className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
-                              <User className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </>
-                )}
+                      )}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            </ScrollArea>
 
             {/* Input Area */}
-            <div className="flex-none h-12 px-4 py-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
-              <form onSubmit={handleSubmit} className="h-full max-w-3xl mx-auto">
-                <div className="flex items-center gap-2 h-full">
+            <div className="flex-none flex items-center px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
+              <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
+                <div className="flex items-center gap-2">
                   <Input
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder={pdfText ? "Ask a question..." : "Upload a document to start chatting..."}
                     disabled={isLoading || !pdfText}
-                    className="flex-1 h-8 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                    className="flex-1 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                   />
                   <Button 
                     type="submit"
                     size="sm"
                     disabled={isLoading || !pdfText || !inputValue.trim()}
-                    className="h-8 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
+                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
                   >
                     <Send className="h-4 w-4" />
                   </Button>
@@ -302,41 +282,46 @@ const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }:
           </div>
 
           {/* PDF Viewer */}
-          {showPDF && (
-            <div className="w-1/2 border-l border-gray-100 dark:border-gray-800 overflow-hidden">
-              <PDFViewer file={pdfFile} />
+          {showPDF && pdfFile && (
+            <div className="w-1/2 border-l border-gray-100 dark:border-gray-800 flex flex-col h-full">
+              <div className="flex-none flex justify-between items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">PDF Viewer</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPDF(false)}
+                  className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <PDFViewer file={pdfFile} />
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Suggested Questions Panel */}
-      {pdfText && suggestedQuestions.length > 0 && (
-        <div className="w-72 flex flex-col bg-gray-50 dark:bg-gray-900">
-          <div className="flex-none h-12 flex items-center px-4 border-b border-gray-200 dark:border-gray-800">
+      {pdfText && suggestedQuestions.length > 0 && !showPDF && (
+        <div className="w-72 flex flex-col">
+          <div className="flex-none flex items-center px-4 py-3 border-b border-gray-200 dark:border-gray-800">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-500" />
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Suggested Questions
-              </h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Suggested Questions</h3>
             </div>
           </div>
           
-          <div className="flex-1 p-4 overflow-y-auto scrollbar-none">
-            <div className="space-y-2">
+          <ScrollArea className="flex-1">
+            <div className="p-4 space-y-2">
               {suggestedQuestions.map((question, index) => (
                 <TooltipProvider key={index}>
                   <Tooltip delayDuration={200}>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="w-full justify-start text-left p-3 h-auto
-                          bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
-                          border border-gray-200 dark:border-gray-700
-                          text-gray-700 dark:text-gray-200
-                          hover:text-gray-900 dark:hover:text-white
-                          rounded-lg transition-all duration-200
-                          disabled:opacity-50"
+                        className="w-full justify-start text-left p-3 h-auto bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                         onClick={() => handleSuggestedQuestion(question)}
                         disabled={isLoading}
                       >
@@ -360,7 +345,7 @@ const ChatInterface = ({ messages, onSendMessage, isLoading, pdfText, pdfFile }:
                 </TooltipProvider>
               ))}
             </div>
-          </div>
+          </ScrollArea>
         </div>
       )}
     </div>

@@ -118,7 +118,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
       {/* Main Document Uploader */}
       <div className="flex-none border-b border-blue-100 dark:border-blue-900 p-3">
         <h3 className="text-sm font-medium mb-1 text-foreground dark:text-white">Upload Document</h3>
-        <div className="h-[120px]">
+        <div className="h-[280px]">
           <DocumentUploader 
             onFileUpload={(file) => handleFileUploadForSession(file)} 
             isLoading={isLoading}
@@ -145,7 +145,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
             </Button>
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="sm"
               onClick={onDeleteAllSessions}
               disabled={isLoading || sessions.length === 0}
               className="text-red-500 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/50"
@@ -155,8 +155,8 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
           </div>
         </div>
 
-        <ScrollArea className="h-[calc(100vh-16rem)] p-3">
-          <div className="space-y-2">
+        <ScrollArea className="h-[calc(100vh-16rem)] p-3 dark:bg-gray-950">
+          <div className="space-y-2 dark:bg-gray-950">
             {sessions.map(session => (
               <div key={session.id}>
                 <div 
@@ -197,7 +197,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-t-lg" />
                       <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500/20 to-transparent rounded-l-lg" />
 
-                      {/* Summary Section with new styling */}
+                      {/* Summary Section */}
                       {session.studyMaterial.summary && (
                         <div className="space-y-3 mb-6">
                           <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
@@ -213,7 +213,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                         </div>
                       )}
 
-                      {/* Suggested Questions Section with enhanced interactivity */}
+                      {/* Suggested Questions Section */}
                       {session.studyMaterial.suggestedQuestions && (
                         <div className="space-y-4 mb-6">
                           <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
@@ -231,13 +231,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                                     {idx + 1}
                                   </span>
                                   <div className="space-y-1.5 flex-1">
-                                    <p 
-                                      className="text-gray-800 dark:text-blue-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 cursor-pointer transition-colors text-base"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Add logic to send question to chat
-                                      }}
-                                    >
+                                    <p className="text-gray-800 dark:text-blue-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 cursor-pointer transition-colors text-base">
                                       {item.question}
                                     </p>
                                     {(item.pageReference || item.sectionReference) && (
@@ -266,7 +260,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                         </div>
                       )}
 
-                      {/* Breakdown Section with cards */}
+                      {/* Breakdown Section */}
                       {session.studyMaterial.breakdown && (
                         <div className="space-y-4 mb-6">
                           <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
@@ -302,7 +296,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                         </div>
                       )}
 
-                      {/* Study Guide Section with enhanced layout */}
+                      {/* Study Guide Section */}
                       {session.studyMaterial.studyGuide && (
                         <div className="space-y-4 mb-6">
                           <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
@@ -346,7 +340,7 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                         </div>
                       )}
 
-                      {/* Practice Questions Section with difficulty indicators */}
+                      {/* Practice Questions Section */}
                       {session.studyMaterial.practiceQuestions && (
                         <div className="space-y-4">
                           <h4 className="font-semibold text-lg text-gray-900 dark:text-white flex items-center">
@@ -369,4 +363,42 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
                                         {item.question}
                                       </p>
                                       <div className="flex items-center gap-2 text-xs">
-                                        <span className={`
+                                        <span
+                                          className={`px-2 py-0.5 rounded-full text-white ${
+                                            item.difficulty === 'easy'
+                                              ? 'bg-green-500'
+                                              : item.difficulty === 'medium'
+                                              ? 'bg-yellow-500'
+                                              : 'bg-red-500'
+                                          }`}
+                                        >
+                                          {item.difficulty.charAt(0).toUpperCase() + item.difficulty.slice(1)}
+                                        </span>
+                                        {item.pageReference && (
+                                          <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                                            <Link2 className="h-3 w-3" />
+                                            Page {item.pageReference}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+  );
+};
+
+export default ChatSessionManager;

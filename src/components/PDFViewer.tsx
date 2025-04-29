@@ -165,7 +165,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
         </div>
 
         {/* Scrollable PDF Content */}
-        <div className="flex-1 overflow-y-auto scrollbar-none">
+        <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col items-center py-4 max-w-full">
             <Document
               file={pdfUrl}
