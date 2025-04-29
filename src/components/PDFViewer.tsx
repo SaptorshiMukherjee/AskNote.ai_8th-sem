@@ -12,6 +12,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 
+// Configure PDF.js worker
 if (typeof window !== 'undefined' && pdfjs.GlobalWorkerOptions) {
   pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 }
@@ -136,7 +137,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
       </div>
 
       {/* PDF Viewer */}
-      <div className="flex-1 flex flex-col overflow-hidden" ref={containerRef}>
+      <div className="flex-1 flex flex-col min-h-0" ref={containerRef}>
         {/* Fixed Controls */}
         <div className="flex-none border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 z-10">
           <div className="flex items-center justify-between p-2">
@@ -172,6 +173,11 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={onDocumentLoadError}
               loading={<p className="text-gray-500 dark:text-gray-400">Loading PDF…</p>}
+              options={{
+                cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+                cMapPacked: true,
+                standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
+              }}
             >
               {isMultiPage
                 ? Array.from(new Array(numPages), (_, i) => (
@@ -183,6 +189,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
                         renderAnnotationLayer
                         renderTextLayer
                         width={Math.min(containerWidth - 48, 896)}
+                        loading={<div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-[500px] w-full" />}
                       />
                     </div>
                   ))
@@ -196,6 +203,7 @@ const PDFViewer = ({ file }: PDFViewerProps) => {
                       renderAnnotationLayer
                       renderTextLayer
                       width={Math.min(containerWidth - 48, 896)}
+                      loading={<div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-[500px] w-full" />}
                     />
                   </div>
                 )}

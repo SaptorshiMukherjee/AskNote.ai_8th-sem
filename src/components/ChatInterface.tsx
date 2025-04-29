@@ -283,7 +283,7 @@ const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pd
 
           {/* PDF Viewer */}
           {showPDF && pdfFile && (
-            <div className="w-1/2 border-l border-gray-100 dark:border-gray-800 flex flex-col h-full">
+            <div className="w-1/2 border-l border-gray-100 dark:border-gray-800 flex flex-col h-full min-h-0">
               <div className="flex-none flex justify-between items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">PDF Viewer</h2>
                 <Button
