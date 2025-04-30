@@ -73,6 +73,16 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
+  // Store active session's PDF file in localStorage when it changes
+  useEffect(() => {
+    if (activeSessionId) {
+      const activeSession = sessions.find(s => s.id === activeSessionId);
+      if (activeSession?.documentName) {
+        localStorage.setItem('lastActivePDF', activeSession.documentName);
+      }
+    }
+  }, [activeSessionId, sessions]);
+
   // Toggle file uploader for a specific session
   const toggleSessionUploader = (sessionId: string) => {
     setSessionUploaders(prev => ({
@@ -110,10 +120,21 @@ const ChatSessionManager: React.FC<ChatSessionManagerProps> = ({
 
   // Handle file upload for a specific session
   const handleFileUploadForSession = async (file: File, sessionId?: string) => {
-    await onFileUpload(file, sessionId);
-    // Close the uploader after successful upload
-    if (sessionId) {
-      setSessionUploaders(prev => ({ ...prev, [sessionId]: false }));
+    try {
+      await onFileUpload(file, sessionId);
+      // Store the file name in localStorage
+      localStorage.setItem('lastActivePDF', file.name);
+      // Close the uploader after successful upload
+      if (sessionId) {
+        setSessionUploaders(prev => ({ ...prev, [sessionId]: false }));
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload the document. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 

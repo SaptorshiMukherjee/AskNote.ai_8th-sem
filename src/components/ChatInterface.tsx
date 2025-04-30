@@ -27,7 +27,11 @@ interface ChatInterfaceProps {
 
 const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pdfText, pdfFile }: ChatInterfaceProps) => {
   const [inputValue, setInputValue] = useState('');
-  const [showPDF, setShowPDF] = useState(false);
+  const [showPDF, setShowPDF] = useState(() => {
+    // Try to restore the showPDF state from localStorage
+    const savedState = localStorage.getItem('showPDF');
+    return savedState ? JSON.parse(savedState) : false;
+  });
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -36,6 +40,18 @@ const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pd
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
+
+  // Save showPDF state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('showPDF', JSON.stringify(showPDF));
+  }, [showPDF]);
+
+  // Reset showPDF state when pdfFile changes
+  useEffect(() => {
+    if (!pdfFile) {
+      setShowPDF(false);
+    }
+  }, [pdfFile]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -177,7 +193,7 @@ const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pd
         {/* Content Area */}
         <div className="flex-1 flex overflow-hidden">
           {/* Chat Messages */}
-          <div className={`flex flex-col ${showPDF ? 'w-1/2' : 'w-full'}`}>
+          <div className={`flex flex-col ${showPDF && pdfFile ? 'w-1/2' : 'w-full'}`}>
             <ScrollArea className="flex-1">
               <div className="px-4 py-2">
                 <div className="space-y-4 max-w-3xl mx-auto">
@@ -285,7 +301,9 @@ const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pd
           {showPDF && pdfFile && (
             <div className="w-1/2 border-l border-gray-100 dark:border-gray-800 flex flex-col h-full min-h-0">
               <div className="flex-none flex justify-between items-center px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">PDF Viewer</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {pdfFile.name}
+                </h2>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -295,7 +313,7 @@ const ChatInterface = ({ messages: initialMessages, onSendMessage, isLoading, pd
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 bg-gray-50 dark:bg-gray-900 overflow-hidden">
                 <PDFViewer file={pdfFile} />
               </div>
             </div>

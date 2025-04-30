@@ -33,7 +33,7 @@ const Chat = () => {
   // Get active PDF file
   const activePdfFile = activeSessionId ? sessionPDFs[activeSessionId] || null : null;
   
-  // Initialize with welcome message when component mounts
+  // Initialize with welcome message and restore PDF files when component mounts
   useEffect(() => {
     const loadSessions = () => {
       // Load sessions from localStorage if available
@@ -59,9 +59,13 @@ const Chat = () => {
           if (savedDocuments) {
             setSessionDocuments(JSON.parse(savedDocuments));
           }
-          
-          // Set active session to most recent if available
-          if (sessionsWithDates.length > 0) {
+
+          // Try to restore the last active session
+          const lastActiveSessionId = localStorage.getItem('lastActiveSessionId');
+          if (lastActiveSessionId && sessionsWithDates.some(s => s.id === lastActiveSessionId)) {
+            setActiveSessionId(lastActiveSessionId);
+          } else if (sessionsWithDates.length > 0) {
+            // Fallback to most recent session
             const mostRecent = sessionsWithDates.sort(
               (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
             )[0];
@@ -90,6 +94,13 @@ const Chat = () => {
       localStorage.setItem('sessionDocuments', JSON.stringify(sessionDocuments));
     }
   }, [sessionDocuments]);
+
+  // Save active session ID whenever it changes
+  useEffect(() => {
+    if (activeSessionId) {
+      localStorage.setItem('lastActiveSessionId', activeSessionId);
+    }
+  }, [activeSessionId]);
 
   // Create a new chat session
   const createNewSession = () => {
@@ -281,7 +292,7 @@ const Chat = () => {
 
   // Delete a single chat session
   const deleteSession = (sessionId: string) => {
-    setSessions(prev => prev.filter(session => session.id !== sessionId));
+    setSessions(prev => prev.filter(s => s.id !== sessionId));
     setSessionDocuments(prev => {
       const newDocs = { ...prev };
       delete newDocs[sessionId];
@@ -292,10 +303,20 @@ const Chat = () => {
       delete newPDFs[sessionId];
       return newPDFs;
     });
-    
-    if (activeSessionId === sessionId) {
-      const remainingSessions = sessions.filter(session => session.id !== sessionId);
-      setActiveSessionId(remainingSessions.length > 0 ? remainingSessions[0].id : null);
+
+    // If deleting active session, switch to most recent remaining session
+    if (sessionId === activeSessionId) {
+      const remainingSessions = sessions.filter(s => s.id !== sessionId);
+      if (remainingSessions.length > 0) {
+        const mostRecent = remainingSessions.sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        )[0];
+        setActiveSessionId(mostRecent.id);
+        localStorage.setItem('lastActiveSessionId', mostRecent.id);
+      } else {
+        setActiveSessionId(null);
+        localStorage.removeItem('lastActiveSessionId');
+      }
     }
     
     toast({
@@ -310,10 +331,9 @@ const Chat = () => {
     setSessionDocuments({});
     setSessionPDFs({});
     setActiveSessionId(null);
-    
-    // Clear localStorage
-    localStorage.removeItem('chatSessions');
+    localStorage.removeItem('lastActiveSessionId');
     localStorage.removeItem('sessionDocuments');
+    localStorage.removeItem('chatSessions');
     
     toast({
       title: "All Chats Deleted",
@@ -324,6 +344,7 @@ const Chat = () => {
   // Select a chat session
   const selectSession = (sessionId: string) => {
     setActiveSessionId(sessionId);
+    localStorage.setItem('lastActiveSessionId', sessionId);
   };
 
   const handleBack = () => {

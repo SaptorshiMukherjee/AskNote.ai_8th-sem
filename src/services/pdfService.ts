@@ -1,14 +1,69 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { generateAnswer } from './aiService'; // <-- import the AI function
 
-// Configure PDF.js worker
-const workerSrc = `${import.meta.env.BASE_URL}pdf.worker.min.js`;
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+// Configure PDF.js worker with a more reliable CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export interface PageContent {
   text: string;
   pageNum: number;
 }
+
+// PDF caching
+const pdfCache = new Map<string, { pdf: any, timestamp: number }>();
+const CACHE_DURATION = 3600000; // 1 hour in milliseconds
+
+const hashFile = async (file: File): Promise<string> => {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+export const getCachedPDF = async (file: File) => {
+  const key = await hashFile(file);
+  const cached = pdfCache.get(key);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.pdf;
+  }
+  
+  const pdf = await loadPDF(file);
+  pdfCache.set(key, { pdf, timestamp: Date.now() });
+  return pdf;
+};
+
+const loadPDF = async (file: File) => {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const typedArray = new Uint8Array(arrayBuffer);
+    
+    // Configure PDF.js with proper options
+    const loadingTask = pdfjsLib.getDocument({
+      data: typedArray,
+      cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+      cMapPacked: true,
+      standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
+      disableFontFace: false,
+      fontExtraProperties: true,
+      useSystemFonts: false,
+      enableXfa: true,
+    });
+
+    const pdf = await loadingTask.promise;
+    return pdf;
+  } catch (error) {
+    console.error('Error loading PDF:', error);
+    if (error instanceof Error) {
+      if (error.message.includes('password')) {
+        throw new Error('This PDF is password protected. Please provide the password.');
+      } else if (error.message.includes('corrupt')) {
+        throw new Error('The PDF file is corrupted. Please try a different file.');
+      }
+    }
+    throw new Error('Failed to load PDF file. Please try again.');
+  }
+};
 
 export const extractTextFromPDF = async (file: File): Promise<{ fullText: string, pageContents: PageContent[] }> => {
   if (!file) {
@@ -21,18 +76,7 @@ export const extractTextFromPDF = async (file: File): Promise<{ fullText: string
 
   try {
     // Load the PDF document
-    const arrayBuffer = await file.arrayBuffer();
-    const typedArray = new Uint8Array(arrayBuffer);
-    
-    // Create PDF document with enhanced error handling
-    const loadingTask = pdfjsLib.getDocument({ data: typedArray });
-    
-    // Add specific error handler for loading
-    loadingTask.onPassword = (updatePassword: (password: string) => void, reason: number) => {
-      throw new Error('Password protected PDFs are not supported');
-    };
-
-    const pdf = await loadingTask.promise;
+    const pdf = await getCachedPDF(file);
 
     if (!pdf || !pdf.numPages) {
       throw new Error('Invalid PDF document structure');
@@ -45,7 +89,10 @@ export const extractTextFromPDF = async (file: File): Promise<{ fullText: string
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       try {
         const page = await pdf.getPage(pageNum);
-        const textContent = await page.getTextContent();
+        const textContent = await page.getTextContent({
+          normalizeWhitespace: true,
+          disableCombineTextItems: false,
+        });
         
         if (!textContent || !textContent.items) {
           console.warn(`No text content found on page ${pageNum}`);
@@ -78,12 +125,11 @@ export const extractTextFromPDF = async (file: File): Promise<{ fullText: string
       pageContents: pageContents.filter(page => page.text.trim().length > 0) 
     };
   } catch (error) {
-    console.error('Error extracting text from PDF:', error);
+    console.error('PDF processing error:', error);
     if (error instanceof Error) {
-      throw new Error(`Failed to process PDF: ${error.message}`);
-    } else {
-      throw new Error('Failed to process PDF: Unknown error occurred');
+      throw error; // Re-throw the original error if it's already an Error object
     }
+    throw new Error('Failed to process PDF file');
   }
 };
 
