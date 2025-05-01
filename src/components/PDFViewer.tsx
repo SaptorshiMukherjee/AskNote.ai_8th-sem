@@ -2,6 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/hooks/use-theme';
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,8 +10,6 @@ import {
   ZoomOut,
   RotateCw,
   Download,
-  Sun,
-  Moon,
 } from 'lucide-react';
 
 // Set up PDF.js worker
@@ -25,9 +24,9 @@ const PDFViewer = memo(({ file }: PDFViewerProps) => {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
   const [rotation, setRotation] = useState<number>(0);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (file) {
@@ -83,7 +82,7 @@ const PDFViewer = memo(({ file }: PDFViewerProps) => {
   }
 
   return (
-    <div className={`flex flex-col h-full ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <div className={`flex flex-col h-full ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Toolbar */}
       <div className="flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2">
@@ -121,13 +120,6 @@ const PDFViewer = memo(({ file }: PDFViewerProps) => {
           </Button>
           <Button variant="ghost" size="sm" onClick={handleDownload}>
             <Download className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsDarkMode(!isDarkMode)}
-          >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
         </div>
       </div>
