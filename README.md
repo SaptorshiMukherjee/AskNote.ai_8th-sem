@@ -59,7 +59,7 @@
 - Inside this file, paste the following line, replacing `YOUR_API_KEY` with your actual API key:
 
   ```plaintext
-  VITE_API_KEY=YOUR_API_KEY
+  VITE_OPENROUTER_API_KEY=YOUR_API_KEY
   ```
 
 > 💡 **Tip**: For a free API, you can use [OpenRouter](https://www.openrouter.ai) to generate your API key.
