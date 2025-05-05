@@ -91,10 +91,11 @@ const PDFViewer = memo(({ file }: PDFViewerProps) => {
             size="sm"
             onClick={handlePreviousPage}
             disabled={pageNumber <= 1}
+            className="text-gray-600 hover:text-gray-900 dark:text-black dark:hover:text-gray-800 bg-gray-100/50 hover:bg-gray-200"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm">
+          <span className="text-sm text-gray-600 dark:text-black">
             Page {pageNumber} of {numPages}
           </span>
           <Button
@@ -102,23 +103,44 @@ const PDFViewer = memo(({ file }: PDFViewerProps) => {
             size="sm"
             onClick={handleNextPage}
             disabled={pageNumber >= numPages}
+            className="text-gray-600 hover:text-gray-900 dark:text-black dark:hover:text-gray-800 bg-gray-100/50 hover:bg-gray-200"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" onClick={handleZoomOut}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleZoomOut}
+            className="text-gray-600 hover:text-gray-900 dark:text-black dark:hover:text-gray-800 bg-gray-100/50 hover:bg-gray-200"
+          >
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <span className="text-sm">{Math.round(scale * 100)}%</span>
-          <Button variant="ghost" size="sm" onClick={handleZoomIn}>
+          <span className="text-sm text-gray-600 dark:text-black">{Math.round(scale * 100)}%</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleZoomIn}
+            className="text-gray-600 hover:text-gray-900 dark:text-black dark:hover:text-gray-800 bg-gray-100/50 hover:bg-gray-200"
+          >
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleRotate}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleRotate}
+            className="text-gray-600 hover:text-gray-900 dark:text-black dark:hover:text-gray-800 bg-gray-100/50 hover:bg-gray-200"
+          >
             <RotateCw className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleDownload}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleDownload}
+            className="text-gray-600 hover:text-gray-900 dark:text-black dark:hover:text-gray-800 bg-gray-100/50 hover:bg-gray-200"
+          >
             <Download className="h-4 w-4" />
           </Button>
         </div>
